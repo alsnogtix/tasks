@@ -1,0 +1,56 @@
+<div class="task-manager-container">
+    <header>
+        <h1>Task Manager</h1>
+        <p>Full-Stack Application using Java Spring Boot (Backend) and Angular (Frontend).</p>
+    </header>
+
+    <!-- Task Creation Form -->
+    <div class="task-form-card">
+        <h2>Add New Task</h2>
+        <form (ngSubmit)="createTask()" #taskForm="ngForm">
+            <div class="input-group">
+                <label for="title">Title</label>
+                <input id="title" name="title" [(ngModel)]="newTask.title" required>
+            </div>
+            <div class="input-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" [(ngModel)]="newTask.description" required></textarea>
+            </div>
+            <button type="submit" [disabled]="!taskForm.valid" class="add-button">Add Task</button>
+        </form>
+    </div>
+
+    <!-- Task List -->
+    <div class="task-list">
+        <h2 *ngIf="tasks.length > 0">Your Current Tasks ({{ tasks.length }})</h2>
+        <h2 *ngIf="tasks.length === 0" class="no-tasks">You have no tasks!</h2>
+
+        <div *ngFor="let task of tasks" class="task-card" [class.completed]="task.status">
+            <div class="task-header">
+                <!-- Checkbox for Update/Status Toggle -->
+                <input 
+                    type="checkbox" 
+                    [checked]="task.status" 
+                    (change)="toggleStatus(task)" 
+                    class="status-toggle"
+                    [id]="'task-' + task.id"
+                >
+                <h3 [class.strike-through]="task.status">{{ task.title }}</h3>
+                <span class="status-badge" [class.status-completed]="task.status">
+                    {{ task.status ? 'Completed' : 'Pending' }}
+                </span>
+            </div>
+            <p class="task-description">{{ task.description }}</p>
+            
+            <div class="task-actions">
+                <!-- Delete Button Implementation -->
+                <button 
+                    (click)="deleteTask(task.id)" 
+                    class="delete-button"
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

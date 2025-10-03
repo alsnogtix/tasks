@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.model.Task;
 import com.example.demo.service.TaskService;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
@@ -23,7 +25,7 @@ public class TaskController {
     @Autowired
     private TaskService taskService;
 
-    @GetMapping("/tasks")
+    @GetMapping("/search")
     public List<Task> getAllTasks() {
         return taskService.findAll();
     }
@@ -33,7 +35,7 @@ public class TaskController {
         return taskService.save(task);
     }
 
-    @GetMapping("/task/{id}")
+    @GetMapping("/search/{id}")
     public Task getTaskById(@PathVariable Long id) {
         return taskService.findById(id).orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
     }
@@ -44,7 +46,7 @@ public class TaskController {
 
     }
 
-    @DeleteMapping("/task/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deletTask(@PathVariable Long id) {
         taskService.delete(id);
         return ResponseEntity.noContent().build();
