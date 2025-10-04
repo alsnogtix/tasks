@@ -19,39 +19,37 @@ import com.example.demo.service.TaskService;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/tasks") 
 public class TaskController {
 
     @Autowired
     private TaskService taskService;
 
-    @GetMapping("/search")
+    @GetMapping 
     public List<Task> getAllTasks() {
         return taskService.findAll();
     }
 
-    @PostMapping("/create")
+    @PostMapping 
     public Task createTask(@RequestBody Task task) {
         return taskService.save(task);
     }
 
-    @GetMapping("/search/{id}")
+    @GetMapping("/{id}")
     public Task getTaskById(@PathVariable Long id) {
         return taskService.findById(id).orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public Task updateTask(@RequestBody Task task, @PathVariable Long id) {
         return taskService.update(id, task);
 
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deletTask(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-
 
 }
