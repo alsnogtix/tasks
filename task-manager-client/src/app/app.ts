@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TaskListComponent } from './task-list/task-list'; // FIXED: Removed the '.ts' extension
+import { Observable } from 'rxjs';
+import { Auth } from './services/auth';
 
 @Component({
   selector: 'app-root',
@@ -12,4 +14,14 @@ import { TaskListComponent } from './task-list/task-list'; // FIXED: Removed the
 })
 export class App {
   title = 'task-manager-client';
+  isLoggedIn$: Observable<boolean>;
+
+  constructor(private auth: Auth, private router: Router) {
+    this.isLoggedIn$ = this.auth.isLoggedIn;
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
 }

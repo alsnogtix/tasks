@@ -27,7 +27,7 @@ public class TaskController {
 
     @GetMapping 
     public List<Task> getAllTasks() {
-        return taskService.findAll();
+        return taskService.findAllByUser();
     }
 
     @PostMapping 

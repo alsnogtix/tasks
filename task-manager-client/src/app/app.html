@@ -1,1 +1,14 @@
-<app-task-list></app-task-list>
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a routerLink="/">Task Manager</a>
+  </div>
+  <div class="navbar-links">
+    <button *ngIf="isLoggedIn$ | async" (click)="logout()" class="logout-button">
+      Logout
+    </button>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
