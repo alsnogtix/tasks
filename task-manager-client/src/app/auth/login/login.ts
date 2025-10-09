@@ -2,8 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Auth } from '../../services/auth';
+// --- FIX: Changed 'Auth' to 'AuthService' --- 
 import { LoginRequest } from '../../interfaces/login-request';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -16,17 +17,20 @@ export class LoginComponent {
   credentials: LoginRequest = {};
   errorMessage: string = '';
 
-  constructor(private auth: Auth, private router: Router) { }
+  // --- FIX: Changed 'Auth' to 'AuthService' ---
+  constructor(private authService: AuthService, private router: Router) { }
 
   login(): void {
-    this.auth.login(this.credentials).subscribe({
+    // --- FIX: Changed 'auth' to 'authService' ---
+    this.authService.login(this.credentials).subscribe({
       next: () => {
         // Navigate to the main task list on successful login
         this.router.navigate(['/']);
       },
       error: (err) => {
         console.error('Login failed', err);
-        this.errorMessage = 'Login failed. Please check your username and password.';
+        // It's helpful to show the actual error status for debugging
+        this.errorMessage = `Login failed (Error: ${err.status}). Please check your username and password.`;
       }
     });
   }

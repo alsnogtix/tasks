@@ -63,6 +63,7 @@ public class TaskService {
 
     // Method to get the current user
     private User getCurrentUser(){
+        System.out.println("Getting current user");
         Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username;
 
@@ -72,7 +73,12 @@ public class TaskService {
             username = principal.toString();
         }
 
-        return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+        Optional<User> user = userRepository.findByUsername(username);
+        if(user == null){
+            throw new RuntimeException("User not found with username: " + username);
+        }
+
+        return user.get();
         
     }
 

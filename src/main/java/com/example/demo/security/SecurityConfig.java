@@ -7,17 +7,18 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * SecurityConfig: Central configuration for Spring Security.
- * Sets up JWT filters, authentication providers, and authorization rules.
- */
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -28,59 +29,57 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    /**
-     * Defines the AuthenticationManager, which is used to process login credentials.
-     * This relies on Spring's built-in AuthenticationConfiguration.
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-    /**
-     * Defines the DaoAuthenticationProvider, which handles user lookup and password checking.
-     * Spring will automatically link this provider to the AuthenticationManager.
-     */
+    
     @Bean
     public DaoAuthenticationProvider authenticationProvider(
         UserDetailsService userDetailsService,
         PasswordEncoder passwordEncoder) {
         
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        // Uses our custom UserService (which implements UserDetailsService)
         authProvider.setUserDetailsService(userDetailsService); 
         authProvider.setPasswordEncoder(passwordEncoder);
         
         return authProvider;
     }
 
-    /**
-     * Defines the core security filter chain, setting up the protection rules.
-     */
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Disable CSRF (Crucial for Stateless REST APIs)
-            .csrf(AbstractHttpConfigurer::disable)
+            // Apply CORS configuration first
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // 2. Set session management as STATELESS (Crucial for JWT)
+            // ** NEW CSRF STRATEGY **
+            // Instead of disabling it completely, we tell it to ignore the auth endpoints
+            .csrf(csrf -> csrf.ignoringRequestMatchers(new AntPathRequestMatcher("/auth/**")))
+            
+            // Configure authorization rules
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            
+            // Set session management to stateless
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             
-            // 3. Define the authorization rules for HTTP requests
-            .authorizeHttpRequests(authorize -> authorize
-                // Allow public access to registration and login endpoints
-                .requestMatchers("/auth/register", "/auth/login").permitAll()
-                
-                // Require authentication (a token) for all /tasks endpoints
-                .requestMatchers("/tasks/**").authenticated()
-                
-                // Require authentication for any other request
-                .anyRequest().authenticated()
-            )
-            
-            // 4. Add JWT filter before Spring's default authentication filter
+            // Add our custom JWT filter
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
             
         return http.build();

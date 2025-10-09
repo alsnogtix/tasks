@@ -32,6 +32,7 @@ public class TaskController {
 
     @PostMapping 
     public Task createTask(@RequestBody Task task) {
+        System.out.println("Creating task: " + task);
         return taskService.save(task);
     }
 

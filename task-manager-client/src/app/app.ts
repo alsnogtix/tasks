@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { TaskListComponent } from './task-list/task-list'; // FIXED: Removed the '.ts' extension
 import { Observable } from 'rxjs';
-import { Auth } from './services/auth';
+import { AuthService as Auth } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
