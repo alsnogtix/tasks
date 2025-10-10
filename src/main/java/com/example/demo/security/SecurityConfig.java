@@ -7,17 +7,17 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,55 +33,44 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-    
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider(
         UserDetailsService userDetailsService,
         PasswordEncoder passwordEncoder) {
-        
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); 
-        authProvider.setPasswordEncoder(passwordEncoder);
-        
-        return authProvider;
-    }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+
+        return authProvider;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Apply CORS configuration first
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // ** NEW CSRF STRATEGY **
-            // Instead of disabling it completely, we tell it to ignore the auth endpoints
-            .csrf(csrf -> csrf.ignoringRequestMatchers(new AntPathRequestMatcher("/auth/**")))
-            
-            // Configure authorization rules
+            // 1. Disable CSRF Protection. This is the most common cause of 403 errors with stateless APIs.
+            .csrf(AbstractHttpConfigurer::disable)
+
+            // 2. Configure Authorization Rules
             .authorizeHttpRequests(authorize -> authorize
+                // Allow all requests to the /auth/** endpoints
                 .requestMatchers("/auth/**").permitAll()
+                // All other requests must be authenticated
                 .anyRequest().authenticated()
             )
-            
-            // Set session management to stateless
+
+            // 3. Set Session Management to Stateless
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            
-            // Add our custom JWT filter
+
+            // 4. Add the JWT filter before the standard username/password filter
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-            
+
         return http.build();
     }
+
+    // 5. We will rely on the @CrossOrigin annotation on the controllers
+    // instead of a global CORS filter for now to simplify the security chain.
 }
